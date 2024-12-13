@@ -224,7 +224,7 @@ def minimize(x, lens, X, P, nets, v):
             else: 
                 # fX = torch.cat([fX.T, f1], dim=1).T
                 fX = torch.cat([fX, f1.T], dim=0) # 与上式等效
-            print('%s %6d;  f1=%4.6e\r' % (S, i, f1))
+            print('%s %d:  f1=%4.6e\r' % (S, i, f1))
             # Polack-Ribiere direction
             s = ( torch.mm(df2.T, df2) - torch.mm(df1.T, df2) )/( torch.mm(df1.T, df1) )*s - df2 # 一个数*s - df2
 
@@ -309,12 +309,12 @@ def tsne_backprop(nets, train_X, train_labels, test_X, test_labels, max_iter=30,
                 ii += nbias_upW
 
         # Estimate the current error
-        activations = run_data_through_network(nets, curX[0]) # n*2
-        sum_act = torch.sum(activations*activations, dim=1).reshape(n,1) # n*1
-        Q = (1 + sum_act.repeat(1,n) + sum_act.T.repeat(n,1) - 2*torch.mm(activations, activations.T) )**(-(v+1)/2)
+        activations = run_data_through_network(nets, curX[0]) # bs*2
+        sum_act = torch.sum(activations*activations, dim=1).reshape(bs,1) # bs*1
+        Q = (1 + sum_act.repeat(1,bs) + sum_act.T.repeat(bs,1) - 2*torch.mm(activations, activations.T) )**(-(v+1)/2)
         Q = Q - torch.diag_embed(Q.diag()) # Q[i,i] = 0
         Q = Q/torch.sum(Q) # 
-        Q = torch.max( Q, 1e-16*torch.ones(n,n) )
+        Q = torch.max( Q, 1e-16*torch.ones(bs,bs) )
         KL = torch.sum( P[0]*torch.log(P[0]/(Q+1e-16)) ).unsqueeze(0) # *,/ 均为元素对位相乘or相除
         print('t-SNE error: KL(P||Q) = %f' % KL)
 
